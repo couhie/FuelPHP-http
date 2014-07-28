@@ -47,7 +47,12 @@ class Http
 			static::$down_servers[$server] = true;
 			return false;
 		}
-		fwrite($s, "GET $url HTTP/1.0\r\n\r\n");
+
+		$request = "GET {$url} HTTP/1.0\r\n";
+		$request .= "Host: {$server}\r\n";
+		$request .= "Connection: Close\r\n\r\n";
+
+		fwrite($s, $request);
 
 		// 通信タイムアウトは第2引数（秒）と第3引数（マイクロ秒）の和
 		stream_set_timeout($s, $trans_timeout_int, $trans_timeout_dec);
