@@ -5,13 +5,15 @@ class Http
 {
 
 	private static $down_servers = array();
+	private static $response_header = null;
+	private static $response_body = null;
 
 	public static function _init()
 	{
 		\Config::load('http', true);
 	}
 
-	public static function get($server, $url, $conn_timeout = null, $trans_timeout = null, $get_res = true)
+	public static function get($server, $url, $conn_timeout = null, $trans_timeout = null, $get_res = true, $throw_error = true)
 	{
 		// パラメタチェック
 		if ( ! $server)
@@ -79,17 +81,27 @@ class Http
 		fclose($s);
 
 		// ヘッダとコンテンツを分割
-		list($header, $body) = explode("\r\n\r\n", $buffer, 2) + array(null, null);
+		list(static::$response_header, static::$response_body) = explode("\r\n\r\n", $buffer, 2) + array(null, null);
 
-		if (strpos($header, '200 OK') === false)
+		if (strpos(static::$response_header, '200 OK') === false)
 		{
 			// ダウンしたサーバーを記録
 			static::$down_servers[$server] = true;
-			trigger_error('response code not 200 for request['.$server.' '.$url.']', E_USER_WARNING);
+			if ($throw_error) trigger_error('response code not 200 for request['.$server.' '.$url.']', E_USER_WARNING);
 			return false;
 		}
 
-		return $body;
+		return static::$response_body;
+	}
+
+	public static function get_response_header()
+	{
+		return static::$response_header;
+	}
+
+	public static function get_response_body()
+	{
+		return static::$response_body;
 	}
 
 }
